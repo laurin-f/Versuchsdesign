@@ -1,61 +1,4 @@
-#List: funktion um txt dateien im Format wie mttty sie schreibt einzulesen####
-#speichert als liste
-read_vaisala_list<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m")){
-  #wenn kein name angegeben wird werden die dateien tiefe1-tiefe4_datum von gestern eingelesen und in eine Liste geschrieben
-  if (!is.character(name)){
-    #liste anlegen
-    lines<-list(1,2,3,4)
-    #schleife zum einlesen der dateien
-    for (i in 1:4){
-      lines[[i]]<-readLines(paste0(pfad,"tiefe",i,"_",datum,".txt"))
-      #timestamp finden 
-      begin<-(grep("Aug|Sep|Oct|Nov",lines[[i]])+2)
-      #falls kein Timestamp vorhanden ist am anfang beginnen
-      if (length(begin)==0){begin<-1}
-      #subset von der ersten zeile nach dem timestamp bis ende 
-      sub<-lines[[i]][begin[1]:length(lines[[i]])]
-      #nur zeilen mit länge der ersten zeile verwenden
-      sub<-sub[nchar(sub)==nchar(sub[1])]      
-      #package für datumsformatierung
-      library(lubridate)
-      #Uhrzeit formatieren
-      date<-parse_date_time(substr(sub,1,8),"HMS")
-      #CO2 Werte rausschreiben
-      CO2<-as.numeric(substr(sub,19,25))
-      
-      ts<-c(43,31,29,29)
-      temp<-as.numeric(substr(sub,ts[i],ts[i]+4))
-      lines[[i]]<-data.frame(date=date,CO2=CO2,temp=temp)
-    }
-    return(lines)
-  }else{
-    lines<-readLines(paste0(pfad,name,".txt"))
-    library(lubridate)
-    
-    begin<-(grep("Aug|Sep|Oct|Nov",lines)+2)
-    if (length(begin)==0){begin<-1}
-    sub<-lines[begin[1]:length(lines)]
-    sub<-sub[nchar(sub)==nchar(sub[1])]
-    date<-parse_date_time(substr(sub,1,8),"HMS")
-    CO2<-as.numeric(substr(sub,19,25))
-    return(data.frame(date=date,CO2=CO2))}}
 
-
-
-#Txt####
-read_vaisala.txt<-function(name,pfad=path){
-  
-  lines<-readLines(paste0(pfad,name,".txt"))
-  library(lubridate)
-  
-  begin<-(grep("Aug|Sep|Oct|Nov",lines)+2)
-  if (length(begin)==0){begin<-1}
-  
-  date<-parse_date_time(paste(substr(lines[begin[1]:length(lines)],1,8)),"HMS")
-  CO2<-as.numeric(substr(lines[begin[1]:length(lines)],19,25))
-  CO2_2<-as.numeric(substr(lines[begin[1]:length(lines)],19+7,25+7))
-  CO2_3<-as.numeric(substr(lines[begin[1]:length(lines)],19+7+7,25+7+7))
-  return(data.frame(date=date,CO2=CO2,CO2_2=CO2_2,CO2_3=CO2_3))}
 #Long: funktion um txt dateien im Format wie mttty sie schreibt einzulesen####
 #offsets=c(0,122.11414,-104.61813,66.67662)
 #speichert im long format
@@ -64,7 +7,7 @@ read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m")
   if (!is.character(name)){
     #liste anlegen
     lines<-list(1,2,3,4)
-    #package für datumsformatierung
+    #package f?r datumsformatierung
     library(lubridate)
     date<-NULL
     date<-parse_date_time(date)
@@ -81,7 +24,7 @@ read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m")
       if (length(begin)==0){begin<-1}
       #subset von der ersten zeile nach dem timestamp bis ende 
       sub<-lines[[i]][begin[1]:length(lines[[i]])]
-      #nur zeilen mit länge der ersten zeile verwenden
+      #nur zeilen mit l?nge der ersten zeile verwenden
       sub<-sub[nchar(sub)==nchar(sub[1])]      
       #Uhrzeit formatieren
       dati<-parse_date_time(substr(sub,1,8),"HMS",tz = "UTC")
@@ -115,52 +58,50 @@ read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m")
     return(data.frame(date=date,CO2=CO2,temp=temp))}}
 
 
-#test plots####
+#load files####
 path<-"C:/Users/ThinkPad/Documents/Masterarbeit/daten/vorbereitung/"
 
 atmo<-read_vaisala(datum="atmo")
 atmos<-read_vaisala(datum="09.10")
 dicht<-read_vaisala(datum="09.10dicht")
+
 path<-"C:/Users/ThinkPad/Documents/Masterarbeit/daten/co2/"
 profil<-read_vaisala(datum="09.10.2")
 head(profil)
 
+############################
+#kalibrierung
 
-as.numeric(diff(range(profil$date)))*60*60
+
+cal_atmos<-tapply(atmos$CO2_raw,atmos$tiefe,mean)
+offsets<-cal_atmos[1:4]-cal_atmos[1]
+
+###########################
+#matrix
 matrix(NA,as.numeric(diff(range(profil$date)))*60*60,5)
-profil2<-read_vaisala.mat()
 
 
-trst<-read_vaisala_list(datum="10.09")
-
-test<-read_vaisala(datum="12.09")
 atm<-read_vaisala(datum="atm")
 atm_tiefe1<-read_vaisala.txt("tiefe1_atm")
 
-test2<-read_vaisala(name="tiefe1_12.09",CO2_line = 9+7,temp_line = 33)
-shift<-test2$date+(min(test$date[test$tiefe==2])-min(test2$date))
-test2$date<-shift
-test[test$tiefe==1,c(1,3,4)]<-test2
 
-library(ggplot2)
-ggplot(dicht,aes(x=date,y=CO2,col=tiefe))+
-  geom_line()+
-  theme_classic()
+
+###########################################
+#test plots####
+
+
 ggplot(profil,aes(x=date,y=CO2_raw,col=as.factor(tiefe)))+
   geom_line()+
   theme_classic()
 ggplot(profil,aes(x=date,y=tiefe,col=CO2))+
   geom_tile()+
   theme_classic()
+
 meanprofil<-aggregate(profil$CO2,list(profil$tiefe) , mean)
 colnames(meanprofil)<-c("tiefe","CO2")
 ggplot(meanprofil,aes(x=CO2,y=tiefe))+
   geom_line()+
   theme_classic()
-
-profil[-which(diff(profil$date)==0),]
-profil$date[diff(profil$date)==0]
-atm_tiefe1$tiefe<-"1_korr"
 
 matplot(atm_tiefe1[,2:4],type="l")
 atmos<-atmos[atmos$date<"0000-01-01 10:31:57 LMT",]
@@ -170,20 +111,8 @@ ggplot(atmos,aes(x=date,y=CO2,col=tiefe))+
   labs(colour="Sonde",y=expression("CO"[2]*"  [ppm]"),x="",title="Kalibrierungsmessung")
 
 
-
-cal_atmos<-tapply(atmos$CO2_raw,atmos$tiefe,mean)
-offsets<-cal_atmos[1:4]-cal_atmos[1]
-test$CO2_cal<-1
-for (i in 1:4)test$CO2_cal[test$tiefe==i]<-test$CO2[test$tiefe==i]+offsets[i]
-
 ggplot(test,aes(x=date,y=CO2,col=tiefe))+
   geom_line()+
   theme_classic()
 scale_x_datetime(limits = c(min(trst[[2]]$date),max(trst[[2]]$date)))+
   scale_y_continuous(limits = c(500,1000))
-
-plot(trst[[2]]$date,trst[[2]]$temp,ylim=c(25,35),col=0)
-for (i in 1:4) lines(trst[[i]]$date,trst[[i]]$temp,col=i)
-plot(trst[[2]]$date,trst[[2]]$CO2,ylim=c(500,1000),col=0)
-for (i in 1:4) lines(trst[[i]]$date,trst[[i]]$CO2,col=i)
-legend("topright",paste("tiefe",1:4),col=1:4,lty = 1,bty="n")
