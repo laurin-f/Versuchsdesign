@@ -57,8 +57,9 @@ read_vaisala.txt<-function(name,pfad=path){
   CO2_3<-as.numeric(substr(lines[begin[1]:length(lines)],19+7+7,25+7+7))
   return(data.frame(date=date,CO2=CO2,CO2_2=CO2_2,CO2_3=CO2_3))}
 #Long: funktion um txt dateien im Format wie mttty sie schreibt einzulesen####
+#offsets=c(0,122.11414,-104.61813,66.67662)
 #speichert im long format
-read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m"),CO2_line=19,temp_line=43,offsets=c(0,122.11414,-104.61813,66.67662)){
+read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m"),CO2_line=19,temp_line=43,offsets=c(-281.40569 ,-23.80690,0,53.22222)){
   #wenn kein name angegeben wird werden die dateien tiefe1-tiefe4_datum von gestern eingelesen und in eine Liste geschrieben
   if (!is.character(name)){
     #liste anlegen
@@ -70,6 +71,7 @@ read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m")
     CO2<-NULL
     temp<-NULL
     tiefe<-NULL
+    tiefenstufen<-c(-2,-6,-10,-14)
     #schleife zum einlesen der dateien
     for (i in 1:4){
       lines[[i]]<-readLines(paste0(pfad,"tiefe",i,"_",datum,".txt"))
@@ -90,13 +92,14 @@ read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m")
       
       ts<-c(43,31,29,29)
       temp<-c(temp,as.numeric(substr(sub,ts[i],ts[i]+4)))
-      tiefe<-c(tiefe,rep(i,length(sub)))
+      tiefe<-c(tiefe,rep(tiefenstufen[i],length(sub)))
     }
     CO2_korr<-CO2
     for (i in 1:4){
-      CO2_korr[tiefe==i]<-CO2[tiefe==i]-offsets[i]
+      CO2_korr[tiefe==tiefenstufen[i]]<-CO2[tiefe==tiefenstufen[i]]-offsets[i]
     }
-    out<-data.frame(date=date,CO2_raw=CO2,CO2=CO2_korr,temp=temp,tiefe=as.character(tiefe))
+    out<-data.frame(date=date,CO2_raw=CO2,CO2=CO2_korr,temp=temp,tiefe=(tiefe))
+    out<-out[-which(diff(out$date)==0),]
     return(out)
   }else{
     lines<-readLines(paste0(pfad,name,".txt"))
@@ -111,7 +114,23 @@ read_vaisala<-function(name=0,pfad=path,datum=format(Sys.time()-3600*24,"%d.%m")
     temp<-as.numeric(substr(sub,temp_line,temp_line+4))
     return(data.frame(date=date,CO2=CO2,temp=temp))}}
 
+
 #test plots####
+path<-"C:/Users/ThinkPad/Documents/Masterarbeit/daten/vorbereitung/"
+
+atmo<-read_vaisala(datum="atmo")
+atmos<-read_vaisala(datum="09.10")
+dicht<-read_vaisala(datum="09.10dicht")
+path<-"C:/Users/ThinkPad/Documents/Masterarbeit/daten/co2/"
+profil<-read_vaisala(datum="09.10.2")
+head(profil)
+
+
+as.numeric(diff(range(profil$date)))*60*60
+matrix(NA,as.numeric(diff(range(profil$date)))*60*60,5)
+profil2<-read_vaisala.mat()
+
+
 trst<-read_vaisala_list(datum="10.09")
 
 test<-read_vaisala(datum="12.09")
@@ -124,22 +143,36 @@ test2$date<-shift
 test[test$tiefe==1,c(1,3,4)]<-test2
 
 library(ggplot2)
-ggplot(test,aes(x=date,y=CO2,col=tiefe))+
+ggplot(dicht,aes(x=date,y=CO2,col=tiefe))+
+  geom_line()+
+  theme_classic()
+ggplot(profil,aes(x=date,y=CO2_raw,col=as.factor(tiefe)))+
+  geom_line()+
+  theme_classic()
+ggplot(profil,aes(x=date,y=tiefe,col=CO2))+
+  geom_tile()+
+  theme_classic()
+meanprofil<-aggregate(profil$CO2,list(profil$tiefe) , mean)
+colnames(meanprofil)<-c("tiefe","CO2")
+ggplot(meanprofil,aes(x=CO2,y=tiefe))+
   geom_line()+
   theme_classic()
 
+profil[-which(diff(profil$date)==0),]
+profil$date[diff(profil$date)==0]
 atm_tiefe1$tiefe<-"1_korr"
 
 matplot(atm_tiefe1[,2:4],type="l")
-
-ggplot(atm,aes(x=date,y=CO2_raw,col=tiefe))+
+atmos<-atmos[atmos$date<"0000-01-01 10:31:57 LMT",]
+ggplot(atmos,aes(x=date,y=CO2,col=tiefe))+
   geom_line()+
   theme_classic()+
   labs(colour="Sonde",y=expression("CO"[2]*"  [ppm]"),x="",title="Kalibrierungsmessung")
 
 
-cal_atm<-tapply(atm$CO2,atm$tiefe,mean)
-offsets<-cal_atm[1:4]-cal_atm[1]
+
+cal_atmos<-tapply(atmos$CO2_raw,atmos$tiefe,mean)
+offsets<-cal_atmos[1:4]-cal_atmos[1]
 test$CO2_cal<-1
 for (i in 1:4)test$CO2_cal[test$tiefe==i]<-test$CO2[test$tiefe==i]+offsets[i]
 
