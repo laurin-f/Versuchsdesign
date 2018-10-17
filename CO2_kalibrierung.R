@@ -39,6 +39,8 @@ atmos$Sonde<-abs(atmos$Sonde)
 atm2$Sonde<-(2-atm2$tiefe)/4
 ##################################
 #plots
+library(ggplot2)
+library(gridExtra)
 
 p1<-ggplot(atm,aes(x=date,y=CO2_raw,col=as.factor(Sonde)))+
   geom_line()+
@@ -55,8 +57,21 @@ p3<-ggplot(atm2,aes(x=date,y=CO2_raw,col=as.factor(Sonde)))+
   theme_classic()+
   labs(colour="Sonde",y=expression("CO"[2]*"  [ppm]"),x="",title="Kalibrierungsmessung3")
 
-library(ggplot2)
-library(gridExtra)
-library(grid)
-mat<-rbind(c(1,1,1,1),c(2,2,3,3))
 grid.arrange(p1,p2,p3)  
+
+p4<-ggplot(atm,aes(x=date,y=temp,col=as.factor(Sonde)))+
+  geom_line()+
+  theme_classic()+
+  labs(colour="Sonde",y=expression("CO"[2]*"  [ppm]"),x="",title="Kalibrierungsmessung1")
+
+p5<-ggplot(atmos,aes(x=date,y=temp,col=as.factor(Sonde)))+
+  geom_line()+
+  theme_classic()+
+  labs(colour="Sonde",y=expression("CO"[2]*"  [ppm]"),x="",title="Kalibrierungsmessung2")
+
+p6<-ggplot(atm2,aes(x=date,y=temp,col=as.factor(Sonde)))+
+  geom_line()+
+  theme_classic()+
+  labs(colour="Sonde",y=expression("CO"[2]*"  [ppm]"),x="",title="Kalibrierungsmessung3")
+
+grid.arrange(p4,p5,p6)  

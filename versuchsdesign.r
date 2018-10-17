@@ -40,7 +40,10 @@ wassermenge<-function(mm,#mm
   zeit_h_min<-paste(floor(zeit_h),round((zeit_h-floor(zeit_h))*60),sep=":")
   return(cbind(mm,intensity_mm_h,pumpstufe,wasser_ml,zeit_h_min))
 }
-wassermenge(50,3)
+wassermenge(50,8)
+
+int50mm8h<-1267.2-380.6
+mm_50mm8h<-int50mm8h/A*10000/1000
 
 t<-60*2#zeit in minuten
 b<-sqrt(5*t-(t/24)^2)#mm regenh?he starkregen
