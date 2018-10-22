@@ -16,6 +16,9 @@ read_vaisala<-function(name=0,#falls angegeben wird die .txt datei einzeln einge
   tiefenstufen<-c(-2,-6,-10,-14)
   #wenn kein name angegeben wird werden die dateien tiefe1-tiefe4_datum von gestern eingelesen und in eine Liste geschrieben
   if (!is.character(name)){
+    if(file.exists(paste0(pfad,"co2_",datum,".R"))){
+      load(paste0(pfad,"co2_",datum,".R"))
+    }else{
     #liste anlegen
     lines<-list(1,2,3,4)
     #package fur datumsformatierung
@@ -29,6 +32,7 @@ read_vaisala<-function(name=0,#falls angegeben wird die .txt datei einzeln einge
 
     #schleife zum einlesen der dateien
     for (i in 1:4){
+      print(paste("reading tiefe",i))
       #.txt datei wird in liste geschrieben
       lines[[i]]<-readLines(paste0(pfad,"tiefe",i,"_",datum,".txt"))
       #timestamp finden 
@@ -81,8 +85,10 @@ read_vaisala<-function(name=0,#falls angegeben wird die .txt datei einzeln einge
     if (aggregate==T){
     min<-format(out$date,"%Y%m%d%H%M")
     outmin<-aggregate(out,list(min,out$tiefe),mean)
-    out<-outmin[,-(1:2)]}
-    
+    out<-outmin[,-(1:2)]
+    }
+    save(out,file=paste0(pfad,"co2_",datum,".R"))
+    }
     return(out)
     
   }else{#ende der if schleife für name = 0
