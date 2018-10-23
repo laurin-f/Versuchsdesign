@@ -1,22 +1,4 @@
 
-r<-7.5#cm Radius
-A<-pi*r^2#cm? Fl?che
-
-auslauf<-0.5#cm? 
-anteil_auslauf<-auslauf/A
-h<-17#cm H?he
-Vges<-h*A/1000#l Volumen
-tiefenstufen<-c(2,6,10,14)
-
-regen<-c(10,20,40,50,60,100)#mm ; l/m? schwach mittel stark
-
-wasser<-regen*A/10000*1000#ml
-zeit<-3
-wasser_pro_h<-wasser/zeit#ml/min
-wasser
-wasser_pro_h
-
-
 #######################################
 #Funktion
 
@@ -40,12 +22,19 @@ wassermenge<-function(mm,#mm
   zeit_h_min<-paste(floor(zeit_h),round((zeit_h-floor(zeit_h))*60),sep=":")
   return(cbind(mm,intensity_mm_h,pumpstufe,wasser_ml,zeit_h_min))
 }
+mm<-c(15,15,50,50)
+t<-c(3,9,8,3)
+wassermenge(mm,t)
+wassermenge(15,4)
+wassermenge(15,9)
+wassermenge(50,8)
 wassermenge(50,3)
 
 int50mm8h<-1267.2-380.6
 mm_50mm8h<-int50mm8h/A*10000/1000
 
-t<-60*2#zeit in minuten
+t<-60*3#zeit in minuten
 b<-sqrt(5*t-(t/24)^2)#mm regenh?he starkregen
+b
 
 unterdruck<-870-980#mbar
