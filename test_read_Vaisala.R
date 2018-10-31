@@ -9,7 +9,7 @@ profil<-read_vaisala(datum="09.10.3",offsets=offsets3)
 #matrix
 mins<-NULL
 maxs<-NULL
-
+library(lubridate)
 mins<-parse_date_time(mins)
 maxs<-parse_date_time(maxs)
 tiefenstufen<--seq(2,14,by=4)

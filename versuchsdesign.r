@@ -27,7 +27,9 @@ t<-c(3,9,8,3)
 wassermenge(mm,t)
 wassermenge(15,4)
 wassermenge(15,9)
+wassermenge(50,50)
 wassermenge(50,8)
+
 wassermenge(50,3)
 
 int50mm8h<-1267.2-380.6

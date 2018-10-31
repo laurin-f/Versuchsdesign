@@ -27,8 +27,9 @@ read_vaisala<-function(name=0,#falls angegeben wird die .txt datei einzeln einge
     lines<-list(1,2,3,4)
     #package fur datumsformatierung
     library(lubridate)
-    date<-NULL
-    date<-parse_date_time(date)
+    #date<-NULL
+    #date<-parse_date_time(date)
+    date<-vector("list",4)
     #leere Vektoren zum befüllen
     CO2<-NULL
     temp<-NULL
@@ -75,9 +76,10 @@ read_vaisala<-function(name=0,#falls angegeben wird die .txt datei einzeln einge
         }
         
       #Uhrzeit formatieren
-      dati<-parse_date_time(paste0(2018,day,substr(sub,1,8)),"YmdHMS",tz = "CEST")
+      #dati<-parse_date_time(paste0(2018,day,substr(sub,1,8)),"YmdHMS",tz = "CEST")
+      date[[i]]<-parse_date_time(paste0(2018,day,substr(sub,1,8)),"YmdHMS",tz = "CET")
       #datum der i-ten Tiefe wird an den datum-Vektor anghängt
-      date<-c(date,dati)
+      #date<-c(date,dati)
       
       #Vektor für die abweichung der Position der CO2 werte in den unterschiedlich Vaisala Outputs 
       cs<-c(0,0,7,0)[order]#reihenfolge kann mit order verändert werden
@@ -92,6 +94,8 @@ read_vaisala<-function(name=0,#falls angegeben wird die .txt datei einzeln einge
       #tiefenstufe i wird sooft an den tiefen-Vektor angehängt, dass die Länge mit den anderen Vektoren übereinstimmt
       tiefe<-c(tiefe,rep(tiefenstufen[i],length(sub)))
     }
+    
+    date<-do.call("c",date)
     
     #CO2 korrektur
     CO2_korr<-CO2
